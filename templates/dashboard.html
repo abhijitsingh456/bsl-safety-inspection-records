@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Background Page with Bar and Pie Chart</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: white;
+        }
+        .chart-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        .chart-card {
+            background-color: #333;
+            border: none;
+            margin-bottom: 1rem;
+        }
+        .card-body {
+            background-color: #333;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .chart {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <div>
+            <h1>Welcome to the Black Background Page</h1>
+            <p>This is a simple example of a page with a total black background using Bootstrap.</p>
+        </div>
+        <div class="chart-container">
+            <div class="chart card chart-card">
+                <div class="card-body">
+                    <div class="chart-title">Bar Chart</div>
+                    <div id="bar-chart">
+                        {{ bar_chart|safe }}
+                    </div>
+                </div>
+            </div>
+            <div class="chart card chart-card">
+                <div class="card-body">
+                    <div class="chart-title">Pie Chart</div>
+                    <div id="pie-chart">
+                        {{ pie_chart|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

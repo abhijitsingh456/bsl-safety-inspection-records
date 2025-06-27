@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed Inspection Data</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+        integrity="sha512-..." crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            padding-top: 20px;
+            display: flex;
+            min-height: 100vh;
+            flex-wrap: wrap;
+        }
+
+        .side-nav {
+            width: 250px;
+            background-color: #343a40;
+            padding: 20px;
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .side-nav a {
+            color: white;
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+        }
+
+        .side-nav a:hover {
+            background-color: #495057;
+        }
+
+        .side-nav .active {
+            background-color: #17a2b8;
+        }
+
+        .side-nav hr {
+            border-color: #6c757d;
+        }
+
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 0px;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title img {
+            max-width: 75%;
+            max-height: 140px;
+        }
+
+        .form-container {
+            background-color: #343a40;
+            padding: 20px;
+            border-radius: 10px;
+            width: 120%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            /* Added margin to separate form from footer */
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+        }
+
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+
+        footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+        }
+        .flash-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: white;
+            position: fixed;
+            top: 70px; /* Adjust based on the position of the logout button */
+            right: 30px;
+            z-index: 1000;
+            text-align: center;
+        }
+        .flash-message.success {
+            background-color: green;
+        }
+        .flash-message.error {
+            background-color: red;
+        }
+        .flash-message.info {
+            background-color: blue;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="logout-btn btn btn-primary">Logout</button>
+    <div class="side-nav">
+        <a href="/inspection-records">All Inspection Records</a>
+        <a href="/create-record" class="active">Create New Record</a>
+        <hr>
+        <a href="/accident-statistics">Accident Statistics</a>
+        <a href="/training-record">Training Record</a>
+    </div>
+    <div class="main-content" id="app">
+        <div class="title">
+            <img src="../static/logos/SAIL-logos_white(1) - Copy.png" alt="Placeholder Image" class="img-fluid">
+        </div>
+        <!-- Flash message section -->
+        <div v-if="flashMessage" :class="['flash-message', flashMessageType]">
+            [[ flashMessage ]]
+        </div>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="form1-tab" data-toggle="tab"  @click=changeActiveTab(1) role="tab"
+                    aria-controls="form1" aria-selected="true">Inspection</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="form2-tab" data-toggle="tab"  @click=changeActiveTab(2) role="tab" aria-controls="form2"
+                    aria-selected="false">Meeting</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="form3-tab" data-toggle="tab"  @click=changeActiveTab(3)  role="tab" aria-controls="form3"
+                    aria-selected="false">Training</a>
+            </li>
+        </ul>
+        <!--FORM FOR FEEDING INSPECTION DATA-->
+        <div v-if="active_tab == 1" class="tab-content" id="myTabContent">
+            <div class="form-container">
+                <form @submit.prevent="submitInspectionData">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Date:</label>
+                            <input v-model="newInspectionRecord.date" type="date" id="date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <select v-model="newInspectionRecord.inspection_category" id="category" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <option v-for="category in inspection_categories" :key="category" :value="category">
+                                    [[ category ]]
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">Department:</label>
+                            <select v-model="newInspectionRecord.department" id="department" class="form-control" required>
+                                <option value="">Select Department</option>
+                                <option v-for="department in all_departments" :key="department" :value="department">
+                                    [[ department ]]
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Location:</label>
+                            <input v-model="newInspectionRecord.location" type="text" id="location" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="observation">Observation:</label>
+                        <textarea v-model="newInspectionRecord.observation" id="observation" class="form-control" rows="3"
+                            required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compliance-status">Compliance Status:</label>
+                            <select v-model="newInspectionRecord.compliance_status" id="compliance-status" class="form-control"
+                                required>
+                                <option value="">Select Status</option>
+                                <option value="Complied">Complied</option>
+                                <option value="Not Complied">Not Complied</option>
+                                <option value="Good Point">Good Point</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="discussed-with">Discussed With:</label>
+                            <input v-model="newInspectionRecord.discussed_with" type="text" id="discussed-with"
+                                class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="target-date">Target Date or Duration:</label>
+                            <input v-model="newInspectionRecord.target_date" type="text" id="target-date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="photo">Upload Photos:</label>
+                            <input @change="handleInspectionPhotoUpload" type="file" id="photo" class="form-control" accept="image/*" multiple>
+                        </div>
+                    </div>
+                    <div class="submit-btn">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!--FORM FOR FEEDING MEETING DATA-->
+        <div v-if="active_tab == 2" class="tab-content" id="myTabContent">
+            <div class="form-container">
+                <form @submit.prevent="submitMeetingData">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Date:</label>
+                            <input v-model="newMeetingRecord.date" type="date" id="date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <select v-model="newMeetingRecord.meeting_category" id="category" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <option v-for="category in meeting_categories" :key="category" :value="category">
+                                    [[ category ]]
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">Department:</label>
+                            <select v-model="newMeetingRecord.department" id="department" class="form-control" required>
+                                <option value="">Select Department</option>
+                                <option v-for="department in all_departments" :key="department" :value="department">
+                                    [[ department ]]
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="no_participants">No. of Participants</label>
+                            <input v-model="newMeetingRecord.no_participants" type="number" id="no_participants" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="chaired_by">Chaired by:</label>
+                            <input v-model="newMeetingRecord.chaired_by" type="text" id="chaired_by" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="photo">Upload Photos:</label>
+                            <input @change="handleMeetingPhotoUpload" type="file" id="photo" class="form-control" multiple>
+                        </div>
+                    </div>
+                    <div class="submit-btn">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!--FORM FOR FEEDING TRAINING DATA-->
+        <div v-if="active_tab == 3" class="tab-content" id="myTabContent">
+            <div class="form-container">
+                <form @submit.prevent="submitTrainingData">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Date:</label>
+                            <input v-model="newTrainingRecord.date" type="date" id="date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <select v-model="newTrainingRecord.training_category" id="category" class="form-control" required>
+                                <option value="">Select Category</option>
+                                <option v-for="category in training_categories" :key="category" :value="category">
+                                    [[ category ]]
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div v-if="newTrainingRecord.training_category  == 'Others'" class="form-row">
+                        <div class="form-group">
+                            <label for="other_category">Enter Training Category:</label>
+                            <input v-model="newTrainingRecord.other_category" type="text" id="other_category" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="department">Department:</label>
+                            <select v-model="newTrainingRecord.department" id="department" class="form-control" required>
+                                <option value="">Select Department</option>
+                                <option v-for="department in all_departments" :key="department" :value="department">
+                                    [[ department ]]
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="no_participants">No. of Participants</label>
+                            <input v-model="newTrainingRecord.no_participants" type="number" id="no_participants" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="participation_level">Participation Level:</label>
+                            <select v-model="newTrainingRecord.participation_level" id="participation_level" class="form-control" required>
+                                <option value="">Participation Level</option>
+                                <option value="Executive">Executive</option>
+                                <option value="Non-Executive">Non-Executive</option>
+                                <option value="Contractual">Contractual</option>
+                                <option value="Contractual">Non-Executive & Contractual</option>
+                                <option value="Contractual">Exec., Non-Exec. & Contractual</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="photo">Upload Photos:</label>
+                            <input @change="handleTrainingPhotoUpload" type="file" id="photo" class="form-control" multiple>
+                        </div>
+                    </div>
+                    <div class="submit-btn">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    </div>
+    <script src='../static/create-record.js'></script>
+</body>
+</html>

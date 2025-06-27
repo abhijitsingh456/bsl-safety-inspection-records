@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inspection Records</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" />
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.1/xlsx.full.min.js"></script>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      padding-top: 20px;
+      display: flex;
+      min-height: 100vh;
+      flex-wrap: wrap;
+    }
+    .side-nav {
+      width: 250px;
+      background-color: #343a40;
+      padding: 20px;
+      position: fixed;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .side-nav a {
+      color: white;
+      display: block;
+      padding: 10px;
+      text-decoration: none;
+    }
+    .side-nav a:hover {
+      background-color: #495057;
+    }
+    .side-nav .active {
+      background-color: #17a2b8;
+    }
+    .side-nav hr {
+      border-color: #6c757d;
+    }
+    .main-content {
+      margin-left: 270px;
+      flex: 1;
+    }
+    .title {
+      text-align: center;
+    }
+    .title img {
+      max-width: 100%;
+      max-height: 200px; /* Set your desired maximum height */
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .input-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .input-container .form-group {
+      margin: 0 10px;
+      flex: 1;
+    }
+    .table-container {
+      margin-top: 20px;
+      max-height: 600px; /* Increased height */
+      overflow-y: auto;
+      margin-bottom: 30px; /* Space between table and footer */
+    }
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table-container th,
+    .table-container td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid white;
+      word-wrap: break-word; /* Allow text to wrap within cells */
+    }
+    .table-container th {
+      background-color: #495057;
+    }
+    .table-container td {
+      background-color: #17a2b8;
+    }
+    .table-container select {
+      background-color: #17a2b8;
+      color: white;
+      border: none;
+      text-align: center;
+      width: 100%;
+    }
+    .logout-btn {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+    }
+    /* Icons */
+    .icon {
+      color: white;
+      font-size: 20px;
+      margin-left: 10px;
+    }
+    /* Increase width of date column */
+    th.date-column {
+      width: 15%; /* Adjusted width */
+    }
+    /* Adjusted margin between icons */
+    .icon + .icon {
+      margin-left: 5px;
+    }
+    footer {
+      background-color: #343a40;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      margin-top: auto;
+      width: 100%;
+    }
+    .flash-message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      color: white;
+      position: fixed;
+      top: 70px; /* Adjust based on the position of the logout button */
+      right: 30px;
+      z-index: 1000;
+      text-align: center;
+    }
+    .flash-message.success {
+      background-color: green;
+    }
+    .flash-message.error {
+      background-color: red;
+    }
+    .flash-message.info {
+      background-color: blue;
+    }
+  </style>
+</head>
+<body>
+  <button class="logout-btn btn btn-primary">Logout</button>
+  <div class="side-nav">
+    <a href="/inspection-records">All Inspection Records</a>
+    <a href="/meeting-records" class="active">All Meeting Records</a>
+    <a href="/create-record">Create New Record</a>
+    <hr>
+    <a href="/accident-statistics">Accident Statistics</a>
+    <a href="/training-record">Training Record</a>
+  </div>
+  <div class="main-content">
+    <div class="container text-center" id="app">
+      <!-- Flash message section -->
+      <div v-if="flashMessage" :class="['flash-message', flashMessageType]">
+        [[ flashMessage ]]
+      </div>
+
+      <div class="title">
+        <img src="../static/logos/SAIL-logos_white(1).png" alt="Placeholder Image" class="img-fluid">
+        <h1 class="my-1">Safety Engineering Department</h1>
+      </div>
+      <div class="input-container">
+        <div class="form-group">
+          <label for="start-date">Start Date:</label>
+          <input v-model="start" type="date" id="start-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="end-date">End Date:</label>
+          <input v-model="end" type="date" id="end-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="category">Category:</label>
+          <select v-model="category" id="category" class="form-control">
+            <option value="">Select Category</option>
+            <option value="DLSIC">DLSIC</option>
+            <option value="SAC">SAC</option>
+            <option value="SAW">SAW</option>
+            <option value="Contractor Safety Committee">Contractor Safety Committee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="department">Department:</label>
+          <select v-model="department" id="department" class="form-control">
+            <option value="">Select Department</option>
+            <option v-for="department in all_departments" :key="department" :value="department">
+              [[ department ]]
+            </option>
+          </select>
+        </div>
+        <!-- Search Icon -->
+        <a title="Search" @click="getData">
+          <i class="icon fas fa-search"></i>
+        </a>
+        <!-- Excel Icon -->
+        <a title="Excel Summary" @click="createSummary">
+          <i class="icon fas fa-file-excel"></i>
+        </a>
+      </div>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table class="table table-bordered table-dark">
+            <thead>
+              <tr>
+                <th class="date-column">Date</th>
+                <th>Category</th>
+                <th>Department</th>
+                <th class="date-column">Participants</th> <!-- to reduce width of the column -->
+                <th>Chaired By</th>
+                <th>Photo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(meeting, index) in observations" :key="index">
+                <td>[[ meeting.date ]]</td>
+                <td>[[ meeting.meeting_category ]]</td>
+                <td>[[ meeting.department ]]</td>
+                <td>[[ meeting.no_participants ]]</td>
+                <td>[[ meeting.chaired_by ]]</td>
+                <td>
+                  <div v-for="(image, linkIndex) in meeting.images" :key="linkIndex">
+                    <a :href="image" target="_blank" title="image">
+                      <i class="icon fas fa-image"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <p>You know whom to contact if anything breaks</p>
+  </footer>
+  <script src='../static/meeting-records.js'></script>
+</body>
+</html>
